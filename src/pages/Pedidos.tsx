@@ -1,34 +1,83 @@
 import Head from 'next/head'
 import { initializeApp } from 'firebase/app';
-import { DocumentData, collection, getDocs, getFirestore, query, where } from 'firebase/firestore/lite';
+import { DocumentData, collection, getDocs, getFirestore, query, addDoc } from 'firebase/firestore/lite';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/router'
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyCKGMH0D7vAgZGtlVwHm4LjtMaVIeS6p48',
-  authDomain: "burger-queen-29c57.firebaseapp.com",
-  databaseURL: "https://burger-queen-29c57-default-rtdb.firebaseio.com",
-  projectId: "burger-queen-29c57",
-  storageBucket: "burger-queen-29c57.appspot.com",
-  messagingSenderId: "432702061693",
-  appId: "1:432702061693:web:fe7637a581c518be310514"
-};
+type PedidosProps = {
+  firebaseConfig: {
+    apiKey: string
+    authDomain: string
+    databaseURL: string
+    projectId: string
+    storageBucket: string
+    messagingSenderId: string
+    appId: string
+  }
+}
+export default function Pedidos({ firebaseConfig }: PedidosProps) {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export default function Pedidos() {
   const router = useRouter();
   const [menu, setMenu] = useState<DocumentData>();
+  const [menutype, setMenuType] = useState<'day' | 'breakfast'>('breakfast');
+  const [oldOrders, setOldOrders] = useState<any[]>([]);
+  const [clientName, setClientName] = useState<string>('');
+  const [newOrderItems, setNewOrderItems] = useState<any[]>([]);
 
-  async function getMenu(type: 'day' | 'breakfast') {
-    const menuColection = query(collection(db, 'menu'), where('menu_type', '==', type));
+  function checkValues() {
+    if (!clientName) {
+      alert('Preencha o nome do cliente')
+      return false
+    }
+
+    if (newOrderItems.length === 0) {
+      alert('Adicione ao menos um item')
+      return false
+    }
+
+    return true
+  }
+
+  function cleanValues() {
+    setClientName('')
+    setNewOrderItems([])
+  }
+
+  async function postOrder() {
+    const total = getTotalItens()
+
+    checkValues()
+
+    const body = {
+      client_name: clientName,
+      items: newOrderItems.map(x => x.id),
+      total,
+      created_at: new Date(),
+    }
+
+    addDoc(collection(db, 'order'), body)
+    cleanValues()
+  }
+
+  async function getMenu() {
+    const menuColection = query(collection(db, 'menu'))//, where('menu_type', '==', type));
     const menuSnapshot = await getDocs(menuColection);
     const menuList = menuSnapshot.docs.map(doc => {
       return { id: doc.id, ...doc.data() }
     });
     setMenu(menuList);
+  }
+
+  async function getOrders() {
+    const orderColection = query(collection(db, 'order'));
+    const orderSnapshot = await getDocs(orderColection);
+    const orderList = orderSnapshot.docs.map(doc => {
+      return { id: doc.id, ...doc.data() }
+    });
+    setOldOrders(orderList);
   }
 
   const logoutUser = async () => {
@@ -41,8 +90,31 @@ export default function Pedidos() {
     }
   }
 
+  const getTotalItens = () => {
+    return newOrderItems.reduce((acc, item) => {
+      return acc + item.item_price
+    }, 0)
+  }
+
+  const handleAddItem = (newItem: any) => {
+    setNewOrderItems([...newOrderItems, newItem])
+  }
+
+  const handleRemoverItem = (newItem: any) => {
+    const index = newOrderItems.findIndex(x => x.id === newItem.id);
+    newOrderItems.splice(index, 1);
+    setNewOrderItems([...newOrderItems])
+  }
+
+  const handleChangeMenu = (type: 'day' | 'breakfast') => {
+    setMenuType(type)
+    setNewOrderItems([])
+    setClientName('')
+  }
+
   useEffect(() => {
-    getMenu('breakfast');
+    getMenu();
+    getOrders()
   }, [])
 
   return (
@@ -55,26 +127,96 @@ export default function Pedidos() {
       </Head>
       <main>
         <button onClick={logoutUser}>Sair</button>
-        <h1>Hello World</h1>
+
+        <br />
+        <br />
 
         <div>
-          <button onClick={() => getMenu('breakfast')}>Café da manhã</button>
-          <button onClick={() => getMenu('day')}>Dia</button>
+          <button
+            disabled={menutype === 'breakfast'}
+            onClick={() => handleChangeMenu('breakfast')}
+          >
+            Café da manhã
+          </button>
+          <button
+            disabled={menutype === 'day'}
+            onClick={() => handleChangeMenu('day')}
+          >
+            Dia
+          </button>
         </div>
 
         <details open>
           <summary>Menu</summary>
           <ul>
             {
-              menu?.map((item: any) => (
+              menu?.filter(x => x.menu_type === menutype).map((item: any) => (
                 <li key={item.id}>
                   <p>{item.item_name} - R$ {item.item_price}</p>
+                  <button onClick={() => handleAddItem(item)}>Adicionar</button>
                 </li>
               ))
             }
           </ul>
         </details>
+
+        <br />
+        <details open>
+          <summary>New order</summary>
+          <label htmlFor="clientName">
+            Client Name:
+            <input type="text" id="clientName" onBlur={({ currentTarget }) => setClientName(currentTarget.value)} />
+          </label>
+
+          <ul>
+            {newOrderItems.map((item) => (
+              <li key={item.id}>
+                <p>{item.item_name} - R$ {item.item_price}</p>
+                <button onClick={() => handleRemoverItem(item)}>Remover</button>
+              </li>
+            ))}
+          </ul>
+          <h2>Total: {getTotalItens()}</h2>
+
+          <button onClick={postOrder}>Adicionar pedido</button>
+        </details>
+
+        <br />
+        <details>
+          <summary>Old Orders</summary>
+          {oldOrders.map((item) => (
+            <div key={item.id}>
+              {item.client_name} - R$ {item.total}
+              <ul>
+                {item.items.map((item: any) => (
+                  <li key={item}>
+                    <p>{menu?.find(x => x.id === item)?.item_name}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </details>
       </main>
     </>
   )
+}
+
+
+export async function getStaticProps() {
+  const firebaseConfig = {
+    apiKey: process.env.APIKEY,
+    authDomain: process.env.AUTHDOMAIN,
+    databaseURL: process.env.DATABASEURL,
+    projectId: process.env.PROJECTID,
+    storageBucket: process.env.STORAGEBUCKET,
+    messagingSenderId: process.env.MESSAGINGSENDERID,
+    appId: process.env.APPID,
+  };
+
+  return {
+    props: {
+      firebaseConfig
+    },
+  }
 }
