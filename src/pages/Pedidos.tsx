@@ -1,9 +1,12 @@
 import Head from 'next/head'
 import { initializeApp } from 'firebase/app';
-import { DocumentData, collection, getDocs, getFirestore, query, addDoc } from 'firebase/firestore/lite';
+import { collection, getDocs, getFirestore, query, where, orderBy, Timestamp } from 'firebase/firestore/lite';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/router'
+import ListOldOrders from '@/containers/ListOldOrders';
+import NewOrder from '@/containers/NewOrder';
+import { MenuItem } from '@/types/MenuItem';
 
 type PedidosProps = {
   firebaseConfig: {
@@ -21,58 +24,31 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
   const db = getFirestore(app);
 
   const router = useRouter();
-  const [menu, setMenu] = useState<DocumentData>();
-  const [menutype, setMenuType] = useState<'day' | 'breakfast'>('breakfast');
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+
   const [oldOrders, setOldOrders] = useState<any[]>([]);
-  const [clientName, setClientName] = useState<string>('');
-  const [newOrderItems, setNewOrderItems] = useState<any[]>([]);
-
-  function checkValues() {
-    if (!clientName) {
-      alert('Preencha o nome do cliente')
-      return false
-    }
-
-    if (newOrderItems.length === 0) {
-      alert('Adicione ao menos um item')
-      return false
-    }
-
-    return true
-  }
-
-  function cleanValues() {
-    setClientName('')
-    setNewOrderItems([])
-  }
-
-  async function postOrder() {
-    const total = getTotalItens()
-
-    checkValues()
-
-    const body = {
-      client_name: clientName,
-      items: newOrderItems.map(x => x.id),
-      total,
-      created_at: new Date(),
-    }
-
-    addDoc(collection(db, 'order'), body)
-    cleanValues()
-  }
 
   async function getMenu() {
-    const menuColection = query(collection(db, 'menu'))//, where('menu_type', '==', type));
+    const menuColection = query(collection(db, 'menu'))
     const menuSnapshot = await getDocs(menuColection);
     const menuList = menuSnapshot.docs.map(doc => {
       return { id: doc.id, ...doc.data() }
-    });
+    }) as MenuItem[];
+
     setMenu(menuList);
   }
 
   async function getOrders() {
-    const orderColection = query(collection(db, 'order'));
+    const today = new Date();
+    const startDate = Timestamp.fromDate(
+      new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    );
+
+    const orderColection = query(
+      collection(db, 'order'),
+      where('created_at', '>', startDate),
+      orderBy('created_at', 'desc'));
+
     const orderSnapshot = await getDocs(orderColection);
     const orderList = orderSnapshot.docs.map(doc => {
       return { id: doc.id, ...doc.data() }
@@ -88,28 +64,6 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
     } catch (error) {
       console.log(error)
     }
-  }
-
-  const getTotalItens = () => {
-    return newOrderItems.reduce((acc, item) => {
-      return acc + item.item_price
-    }, 0)
-  }
-
-  const handleAddItem = (newItem: any) => {
-    setNewOrderItems([...newOrderItems, newItem])
-  }
-
-  const handleRemoverItem = (newItem: any) => {
-    const index = newOrderItems.findIndex(x => x.id === newItem.id);
-    newOrderItems.splice(index, 1);
-    setNewOrderItems([...newOrderItems])
-  }
-
-  const handleChangeMenu = (type: 'day' | 'breakfast') => {
-    setMenuType(type)
-    setNewOrderItems([])
-    setClientName('')
   }
 
   useEffect(() => {
@@ -129,74 +83,18 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
         <button onClick={logoutUser}>Sair</button>
 
         <br />
-        <br />
 
-        <div>
-          <button
-            disabled={menutype === 'breakfast'}
-            onClick={() => handleChangeMenu('breakfast')}
-          >
-            Café da manhã
-          </button>
-          <button
-            disabled={menutype === 'day'}
-            onClick={() => handleChangeMenu('day')}
-          >
-            Dia
-          </button>
-        </div>
-
-        <details open>
-          <summary>Menu</summary>
-          <ul>
-            {
-              menu?.filter(x => x.menu_type === menutype).map((item: any) => (
-                <li key={item.id}>
-                  <p>{item.item_name} - R$ {item.item_price}</p>
-                  <button onClick={() => handleAddItem(item)}>Adicionar</button>
-                </li>
-              ))
-            }
-          </ul>
-        </details>
+        <NewOrder
+          menu={menu}
+          db={db}
+        />
 
         <br />
-        <details open>
-          <summary>New order</summary>
-          <label htmlFor="clientName">
-            Client Name:
-            <input type="text" id="clientName" onBlur={({ currentTarget }) => setClientName(currentTarget.value)} />
-          </label>
 
-          <ul>
-            {newOrderItems.map((item) => (
-              <li key={item.id}>
-                <p>{item.item_name} - R$ {item.item_price}</p>
-                <button onClick={() => handleRemoverItem(item)}>Remover</button>
-              </li>
-            ))}
-          </ul>
-          <h2>Total: {getTotalItens()}</h2>
-
-          <button onClick={postOrder}>Adicionar pedido</button>
-        </details>
-
-        <br />
-        <details>
-          <summary>Old Orders</summary>
-          {oldOrders.map((item) => (
-            <div key={item.id}>
-              {item.client_name} - R$ {item.total}
-              <ul>
-                {item.items.map((item: any) => (
-                  <li key={item}>
-                    <p>{menu?.find(x => x.id === item)?.item_name}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </details>
+        <ListOldOrders
+          oldOrders={oldOrders}
+          menu={menu}
+        />
       </main>
     </>
   )
