@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { collection, addDoc, Firestore } from 'firebase/firestore';
+import { collection, addDoc, getFirestore } from 'firebase/firestore';
 import { MenuItem } from '@/types/MenuItem';
+import { FirebaseApp } from 'firebase/app';
 
 type NewOrderProps = {
 	menu: MenuItem[];
-	db: Firestore;
+	app: FirebaseApp;
 }
 
-const NewOrder = ({ menu, db }: NewOrderProps) => {
+const NewOrder = ({ menu, app }: NewOrderProps) => {
+	const db = getFirestore(app);
+
 	const [newOrderItems, setNewOrderItems] = useState<any[]>([]);
 	const [clientName, setClientName] = useState<string>('');
 	const [menutype, setMenuType] = useState<'day' | 'breakfast'>('breakfast');
@@ -56,22 +59,21 @@ const NewOrder = ({ menu, db }: NewOrderProps) => {
 	async function postOrder() {
 		const total = getTotalItens()
 
-		checkValues()
-
-		const body = {
-			client_name: clientName,
-			items: newOrderItems.map(x => x.id),
-			total,
-			created_at: new Date(),
+		if (checkValues()) {
+			const body = {
+				client_name: clientName,
+				items: newOrderItems.map(x => x.id),
+				total,
+				created_at: new Date(),
+			}
+			addDoc(collection(db, 'order'), body)
+			cleanValues()
 		}
-
-		addDoc(collection(db, 'order'), body)
-		cleanValues()
 	}
 
 	return (
 		<>
-			<div>
+			<header>
 				<button
 					disabled={menutype === 'breakfast'}
 					onClick={() => handleChangeMenu('breakfast')}
@@ -84,7 +86,9 @@ const NewOrder = ({ menu, db }: NewOrderProps) => {
 				>
 					Dia
 				</button>
-			</div>
+			</header>
+
+			<br />
 
 			<details open>
 				<summary>Menu</summary>

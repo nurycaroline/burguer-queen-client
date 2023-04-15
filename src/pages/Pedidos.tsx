@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import { initializeApp } from 'firebase/app';
-import { collection, getDocs, getFirestore, query, where, orderBy, Timestamp } from 'firebase/firestore/lite';
+import { collection, getDocs, getFirestore, query, where, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/router'
@@ -44,16 +44,20 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
       new Date(today.getFullYear(), today.getMonth(), today.getDate())
     );
 
-    const orderColection = query(
+    const orderQuery = query(
       collection(db, 'order'),
       where('created_at', '>', startDate),
-      orderBy('created_at', 'desc'));
+      orderBy('created_at', 'desc')
+    )
 
-    const orderSnapshot = await getDocs(orderColection);
-    const orderList = orderSnapshot.docs.map(doc => {
-      return { id: doc.id, ...doc.data() }
-    });
-    setOldOrders(orderList);
+    onSnapshot(orderQuery, (querySnapshot) => {
+      const orderList = querySnapshot.docs.map(doc => {
+        return { id: doc.id, ...doc.data() }
+      });
+
+      setOldOrders(orderList);
+    }, (error) => console.log(error));
+
   }
 
   const logoutUser = async () => {
@@ -80,13 +84,15 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <button onClick={logoutUser}>Sair</button>
+        <header>
+          <button onClick={logoutUser}>Sair</button>
+        </header>
 
         <br />
 
         <NewOrder
           menu={menu}
-          db={db}
+          app={app}
         />
 
         <br />
