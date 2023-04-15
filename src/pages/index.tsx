@@ -1,6 +1,5 @@
 import Head from 'next/head'
 import { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
 import { useRouter } from 'next/router'
 
 import {
@@ -8,18 +7,7 @@ import {
 	onAuthStateChanged,
 	signInWithEmailAndPassword,
 } from "firebase/auth";
-
-const firebaseConfig = {
-	apiKey: 'AIzaSyCKGMH0D7vAgZGtlVwHm4LjtMaVIeS6p48',
-	authDomain: "burger-queen-29c57.firebaseapp.com",
-	databaseURL: "https://burger-queen-29c57-default-rtdb.firebaseio.com",
-	projectId: "burger-queen-29c57",
-	storageBucket: "burger-queen-29c57.appspot.com",
-	messagingSenderId: "432702061693",
-	appId: "1:432702061693:web:fe7637a581c518be310514"
-};
-
-const app = initializeApp(firebaseConfig);
+import { toast } from 'react-toastify';
 
 export default function Login() {
 	const router = useRouter();
@@ -37,14 +25,14 @@ export default function Login() {
 			const errorCode = error.code;
 			switch (errorCode) {
 				case "auth/invalid-email":
-					alert("Email inválido");
+					toast.warn("Email inválido");
 					break;
 				case "auth/user-not-found":
 				case "auth/wrong-password":
-					alert("Usuário ou Senha incorreta");
+					toast.warn("Usuário ou Senha incorreta");
 					break;
 				default:
-					alert("Erro desconhecido");
+					toast.warn("Erro desconhecido");
 			}
 		}
 	};

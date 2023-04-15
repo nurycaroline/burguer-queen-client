@@ -11,20 +11,13 @@ const ListOldOrders = ({ oldOrders, menu }: ListOldOrdersProps) => {
 	const orderItemsWithMenuItems = oldOrders.map((order) => {
 		const items: MenuItem[] = order.items
 			.map((item: any) => {
-				const menuItem = menu?.find(x => x.id === item)!;
-				return menuItem;
+				const menuItem = menu?.find(x => x.id === item.id)!;
+				return {
+					...menuItem,
+					count: item.count,
+				};
 			})
-			.reduce((acc, item) => {
-				const foundItem = acc.find(x => x.id === item.id)
-
-				if (foundItem) {
-					foundItem.count = (foundItem.count || 0) + 1;
-					return acc;
-				}
-				return [...acc, { ...item, count: 1 }];
-
-			}, [] as MenuItem[]);
-
+		
 		return { ...order, items };
 	});
 

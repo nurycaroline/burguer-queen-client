@@ -3,6 +3,9 @@ import { collection, addDoc, getFirestore } from 'firebase/firestore';
 import { MenuItem } from '@/types/MenuItem';
 import { FirebaseApp } from 'firebase/app';
 
+import * as S from './styles'
+import { toast } from 'react-toastify';
+
 type NewOrderProps = {
 	menu: MenuItem[];
 	app: FirebaseApp;
@@ -11,7 +14,7 @@ type NewOrderProps = {
 const NewOrder = ({ menu, app }: NewOrderProps) => {
 	const db = getFirestore(app);
 
-	const [newOrderItems, setNewOrderItems] = useState<any[]>([]);
+	const [newOrderItems, setNewOrderItems] = useState<MenuItem[]>([]);
 	const [clientName, setClientName] = useState<string>('');
 	const [menutype, setMenuType] = useState<'day' | 'breakfast'>('breakfast');
 
@@ -21,8 +24,18 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 		}, 0)
 	}
 
-	const handleAddItem = (newItem: any) => {
-		setNewOrderItems([...newOrderItems, newItem])
+	const handleAddItem = (newItem: MenuItem) => {
+		const foundItem = newOrderItems.find(x => x.id === newItem.id)
+		if (foundItem) {
+			foundItem.count = (foundItem.count || 0) + 1;
+			setNewOrderItems([...newOrderItems])
+			return;
+		}
+
+		setNewOrderItems([...newOrderItems, {
+			...newItem,
+			count: 1,
+		}])
 	}
 
 	const handleRemoverItem = (newItem: any) => {
@@ -39,12 +52,12 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 
 	function checkValues() {
 		if (!clientName) {
-			alert('Preencha o nome do cliente')
+			toast.warn('Preencha o nome do cliente')
 			return false
 		}
 
 		if (newOrderItems.length === 0) {
-			alert('Adicione ao menos um item')
+			toast.warn('Adicione ao menos um item')
 			return false
 		}
 
@@ -62,36 +75,42 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 		if (checkValues()) {
 			const body = {
 				client_name: clientName,
-				items: newOrderItems.map(x => x.id),
+				items: newOrderItems.map(({ id, count }) => ({
+					id,
+					count
+				})),
 				total,
 				created_at: new Date(),
 			}
-			addDoc(collection(db, 'order'), body)
-			cleanValues()
+			try {
+				await addDoc(collection(db, 'order'), body)
+				cleanValues()
+				toast.success('Pedido enviado para cozinha')
+			} catch (error) {
+				toast.error('Erro ao salvar pedido')
+			}
 		}
 	}
 
 	return (
-		<>
-			<header>
-				<button
-					disabled={menutype === 'breakfast'}
-					onClick={() => handleChangeMenu('breakfast')}
-				>
-					Café da manhã
-				</button>
-				<button
-					disabled={menutype === 'day'}
-					onClick={() => handleChangeMenu('day')}
-				>
-					Dia
-				</button>
-			</header>
+		<S.Container>
+			<S.ContainerMenu>
+				<header>
+					<button
+						disabled={menutype === 'breakfast'}
+						onClick={() => handleChangeMenu('breakfast')}
+					>
+						Café da manhã
+					</button>
+					<button
+						disabled={menutype === 'day'}
+						onClick={() => handleChangeMenu('day')}
+					>
+						Dia
+					</button>
+				</header>
 
-			<br />
-
-			<details open>
-				<summary>Menu</summary>
+				<h2>Menu</h2>
 				<ul>
 					{
 						menu?.filter(x => x.menu_type === menutype).map((item: any) => (
@@ -102,11 +121,14 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 						))
 					}
 				</ul>
-			</details>
-			<details open>
-				<summary><h2>Resumo do Pedido</h2></summary>
+
+			</S.ContainerMenu>
+
+			<S.ContainerOrder>
+				<h2>Resumo do Pedido</h2>
 				<label htmlFor="clientName">
 					Client Name:
+
 					<input
 						type="text"
 						id="clientName"
@@ -118,16 +140,17 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 				<ul>
 					{newOrderItems.map((item) => (
 						<li key={item.id}>
-							<p>{item.item_name} - R$ {item.item_price}</p>
+							<p>{item.item_name} - R$ {item.item_price} - {item.count}x</p>
 							<button onClick={() => handleRemoverItem(item)}>Remover</button>
 						</li>
 					))}
 				</ul>
-				<h3>Total: {getTotalItens()}</h3>
+				<h3>Total: R${getTotalItens()}</h3>
 
 				<button onClick={postOrder}>Adicionar pedido</button>
-			</details>
-		</>
+				<button onClick={cleanValues}>Limpar pedido</button>
+			</S.ContainerOrder>
+		</S.Container>
 	)
 }
 
