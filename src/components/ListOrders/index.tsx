@@ -28,15 +28,41 @@ const ListOrders = ({ menu, title, orders, inputLabel, inputUpdateKey }: ListOrd
 	});
 
 	const formatDate = (date: Timestamp) => {
-		return new Intl.DateTimeFormat('pt-BR').format(date.toDate());
+		return new Intl.DateTimeFormat('pt-BR', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+		}).format(date.toDate());
 	}
 
 	function handleUpdate(orderId: string, checked: boolean) {
 		if (!inputUpdateKey) return;
-		
+
 		updateDoc(doc(db, "order", orderId), {
-			[inputUpdateKey]: checked
+			[inputUpdateKey]: checked,
+			updated_at: new Date(),
 		})
+	}
+
+	const durationOrder = (start: Timestamp, end: Timestamp) => {
+		const created_at = start.toDate();
+		const updated_at = end.toDate();
+		const diff = updated_at.getTime() - created_at.getTime();
+
+  const time = {
+    day: Math.floor(diff / 86400000),
+    hour: Math.floor(diff / 3600000) % 24,
+    minute: Math.floor(diff / 60000) % 60,
+    second: Math.floor(diff / 1000) % 60,
+    millisecond: Math.floor(diff) % 1000
+  };
+  return Object.entries(time)
+    .filter(val => val[1] !== 0)
+    .map(([key, val]) => `${val} ${key}${val !== 1 ? 's' : ''}`)
+    .join(', ');
 	}
 
 	return (
@@ -57,6 +83,7 @@ const ListOrders = ({ menu, title, orders, inputLabel, inputUpdateKey }: ListOrd
 							</label>
 						)
 					}
+					<p>Duração: {durationOrder(order.created_at, order.updated_at)}</p>
 					<ul>
 						{order.items?.map((item: any) => (
 							<li key={item.id}>
