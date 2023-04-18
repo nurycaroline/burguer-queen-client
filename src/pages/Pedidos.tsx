@@ -7,17 +7,10 @@ import { useRouter } from 'next/router'
 import ListOldOrders from '@/containers/ListOldOrders';
 import NewOrder from '@/containers/NewOrder';
 import { MenuItem } from '@/types/MenuItem';
+import { FirebaseConfigProps, getFirebaseConfig } from '@/lib/firebase';
 
 type PedidosProps = {
-  firebaseConfig: {
-    apiKey: string
-    authDomain: string
-    databaseURL: string
-    projectId: string
-    storageBucket: string
-    messagingSenderId: string
-    appId: string
-  }
+  firebaseConfig: FirebaseConfigProps
 }
 export default function Pedidos({ firebaseConfig }: PedidosProps) {
   const app = initializeApp(firebaseConfig);
@@ -39,14 +32,9 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
   }
 
   async function getOrders() {
-    const today = new Date();
-    const startDate = Timestamp.fromDate(
-      new Date(today.getFullYear(), today.getMonth(), today.getDate())
-    );
-
     const orderQuery = query(
       collection(db, 'order'),
-      where('created_at', '>', startDate),
+      // where('created_at', '>', startDate),
       orderBy('created_at', 'desc')
     )
 
@@ -108,19 +96,11 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
 
 
 export async function getStaticProps() {
-  const firebaseConfig = {
-    apiKey: process.env.APIKEY,
-    authDomain: process.env.AUTHDOMAIN,
-    databaseURL: process.env.DATABASEURL,
-    projectId: process.env.PROJECTID,
-    storageBucket: process.env.STORAGEBUCKET,
-    messagingSenderId: process.env.MESSAGINGSENDERID,
-    appId: process.env.APPID,
-  };
+  const params = getFirebaseConfig()
 
   return {
     props: {
-      firebaseConfig
+      firebaseConfig: params
     },
   }
 }

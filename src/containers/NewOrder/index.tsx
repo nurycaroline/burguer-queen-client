@@ -20,7 +20,7 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 
 	const getTotalItens = () => {
 		return newOrderItems.reduce((acc, item) => {
-			return acc + item.item_price
+			return acc + (item.item_price * (item.count || 1))
 		}, 0)
 	}
 

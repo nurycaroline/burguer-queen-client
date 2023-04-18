@@ -1,5 +1,6 @@
 import { MenuItem } from '@/types/MenuItem';
 import { Order } from '@/types/Order';
+import { Timestamp } from 'firebase/firestore';
 import React from 'react';
 
 type ListOldOrdersProps = {
@@ -17,16 +18,20 @@ const ListOldOrders = ({ oldOrders, menu }: ListOldOrdersProps) => {
 					count: item.count,
 				};
 			})
-		
+
 		return { ...order, items };
 	});
 
+	const formatDate = (date: Timestamp) => {
+		return new Intl.DateTimeFormat('pt-BR').format(date.toDate());
+	}
+
 	return (
 		<details>
-			<summary><h3>Pedidos Realizados - Hoje ({orderItemsWithMenuItems.length || 0})</h3></summary>
+			<summary><h3>Pedidos Realizados ({orderItemsWithMenuItems.length || 0})</h3></summary>
 			{orderItemsWithMenuItems.map((order) => (
 				<div key={order.id}>
-					{order.client_name} - R$ {order.total}
+					{order.client_name} - {formatDate(order.created_at)}  - R$ {order.total}
 					<ul>
 						{order.items?.map((item: any) => (
 							<li key={item.id}>

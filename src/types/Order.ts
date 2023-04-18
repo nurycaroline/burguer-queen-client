@@ -1,7 +1,9 @@
+import { Timestamp } from "firebase/firestore";
+
 export type Order = {
 	id: string;
 	total: number;
 	client_name: string;
-	created_at: string;
+	created_at: Timestamp;
 	items: string[];
 }

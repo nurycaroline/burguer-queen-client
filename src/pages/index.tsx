@@ -8,16 +8,24 @@ import {
 	signInWithEmailAndPassword,
 } from "firebase/auth";
 import { toast } from 'react-toastify';
+import { initializeApp } from 'firebase/app';
+import { FirebaseConfigProps, getFirebaseConfig } from '@/lib/firebase';
 
-export default function Login() {
+type PedidosProps = {
+	firebaseConfig: FirebaseConfigProps
+}
+
+
+export default function Login({ firebaseConfig }: PedidosProps) {
+	initializeApp(firebaseConfig);
 	const router = useRouter();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 
 	const loginUser = async (e: { preventDefault: () => void; }) => {
 		e.preventDefault();
-		const auth = getAuth();
 		try {
+			const auth = getAuth();
 			const user = await signInWithEmailAndPassword(auth, username, password);
 			console.log("User logged in", user);
 			router.push('Pedidos')
@@ -86,4 +94,14 @@ export default function Login() {
 			</main>
 		</>
 	)
+}
+
+export async function getStaticProps() {
+  const params = getFirebaseConfig()
+
+  return {
+    props: {
+      firebaseConfig: params
+    },
+  }
 }
