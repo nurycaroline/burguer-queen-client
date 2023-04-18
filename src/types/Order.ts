@@ -6,4 +6,6 @@ export type Order = {
 	client_name: string;
 	created_at: Timestamp;
 	items: string[];
+	ready: boolean;
+	delivered: boolean;
 }
