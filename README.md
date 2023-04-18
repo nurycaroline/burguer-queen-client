@@ -2,7 +2,6 @@
 
 [Link desafio](https://github.com/Laboratoria/SAP009-burger-queen-api-client)
 
-[ ] Ver os pedidos ordenados à medida em que são feitos.
 [ ] Marcar os pedidos que foram preparados e estão prontos para serem servidos.
 [ ] Ver o tempo que levou para preparar o pedido desde que chegou, até ser marcado como concluído.
 
@@ -18,4 +17,3 @@
 [ ] Adicionar produtos.
 [ ] Excluir produtos.
 [ ] Atualizar dados de produtos.
-[ ] Definição de pronto

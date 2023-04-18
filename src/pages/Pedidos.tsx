@@ -1,10 +1,10 @@
 import Head from 'next/head'
 import { initializeApp } from 'firebase/app';
-import { collection, getDocs, getFirestore, query, where, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, getFirestore, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/router'
-import ListOldOrders from '@/containers/ListOldOrders';
+import KitchenOrders from '@/containers/KitchenOrders';
 import NewOrder from '@/containers/NewOrder';
 import { MenuItem } from '@/types/MenuItem';
 import { FirebaseConfigProps, getFirebaseConfig } from '@/lib/firebase';
@@ -85,7 +85,7 @@ export default function Pedidos({ firebaseConfig }: PedidosProps) {
 
         <br />
 
-        <ListOldOrders
+        <KitchenOrders
           oldOrders={oldOrders}
           menu={menu}
         />

@@ -3,12 +3,12 @@ import { Order } from '@/types/Order';
 import { Timestamp } from 'firebase/firestore';
 import React from 'react';
 
-type ListOldOrdersProps = {
+type KitchenOrdersProps = {
 	oldOrders: Order[];
 	menu: MenuItem[];
 }
 
-const ListOldOrders = ({ oldOrders, menu }: ListOldOrdersProps) => {
+const KitchenOrders = ({ oldOrders, menu }: KitchenOrdersProps) => {
 	const orderItemsWithMenuItems = oldOrders.map((order) => {
 		const items: MenuItem[] = order.items
 			.map((item: any) => {
@@ -28,7 +28,7 @@ const ListOldOrders = ({ oldOrders, menu }: ListOldOrdersProps) => {
 
 	return (
 		<details>
-			<summary><h3>Pedidos Realizados ({orderItemsWithMenuItems.length || 0})</h3></summary>
+			<summary><h3>Pedidos na Cozinha ({orderItemsWithMenuItems.length || 0})</h3></summary>
 			{orderItemsWithMenuItems.map((order) => (
 				<div key={order.id}>
 					{order.client_name} - {formatDate(order.created_at)}  - R$ {order.total}
@@ -45,4 +45,4 @@ const ListOldOrders = ({ oldOrders, menu }: ListOldOrdersProps) => {
 	)
 }
 
-export default ListOldOrders;
+export default KitchenOrders;
