@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { initializeApp } from 'firebase/app';
-import { collection, getDocs, getFirestore, query, orderBy, onSnapshot, where } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { collection, getDocs, getFirestore, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { useCallback, useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/router'
 import NewOrder from '@/components/NewOrder';
@@ -26,7 +26,8 @@ function OrdersContainer({ firebaseConfig }: PedidosProps) {
   const [readyOrders, setReadyOrders] = useState<any[]>([]);
   const [deliveredOrders, setDeliveredOrders] = useState<any[]>([]);
 
-  async function getMenu() {
+
+  const getMenu = useCallback(async () => {
     const menuColection = query(collection(db, 'menu'))
     const menuSnapshot = await getDocs(menuColection);
     const menuList = menuSnapshot.docs.map(doc => {
@@ -34,14 +35,14 @@ function OrdersContainer({ firebaseConfig }: PedidosProps) {
     }) as MenuItem[];
 
     setMenu(menuList);
-  }
+  }, [db])
 
-  async function getOldOrders() {
+  const getOldOrders = useCallback(() => {
     const orderQuery = query(
       collection(db, 'order'),
       orderBy('created_at', 'desc')
     )
-
+    
     onSnapshot(orderQuery, (querySnapshot) => {
       const orderList = querySnapshot.docs.map(doc => {
         return { id: doc.id, ...doc.data() }
@@ -57,7 +58,7 @@ function OrdersContainer({ firebaseConfig }: PedidosProps) {
       setDeliveredOrders(delivered);
 
     }, (error) => console.log(error));
-  }
+  }, [db])
 
 
 
