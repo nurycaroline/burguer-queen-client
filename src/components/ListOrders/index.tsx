@@ -3,6 +3,7 @@ import { Order } from '@/types/Order';
 import { Timestamp, doc, getFirestore, updateDoc } from 'firebase/firestore';
 import React from 'react';
 import * as S from './styles';
+import calcDuration from '@/helpers/CalcDuration';
 
 type ListOrdersProps = {
 	orders: Order[];
@@ -48,26 +49,6 @@ const ListOrders = ({ menu, title, orders, inputLabel, inputUpdateKey }: ListOrd
 		})
 	}
 
-	const durationOrder = (start: Timestamp, end: Timestamp) => {
-		if (!start || !end) return;
-
-		const created_at = start.toDate();
-		const updated_at = end.toDate();
-		const diff = updated_at.getTime() - created_at.getTime();
-
-		const time = {
-			day: Math.floor(diff / 86400000),
-			hour: Math.floor(diff / 3600000) % 24,
-			minute: Math.floor(diff / 60000) % 60,
-			second: Math.floor(diff / 1000) % 60,
-			millisecond: Math.floor(diff) % 1000
-		};
-		return Object.entries(time)
-			.filter(val => val[1] !== 0)
-			.map(([key, val]) => `${val} ${key}${val !== 1 ? 's' : ''}`)
-			.join(', ');
-	}
-
 	return (
 		<S.DetailOrder>
 			<summary>{title} ({orderItemsWithMenuItems.length || 0})</summary>
@@ -92,7 +73,7 @@ const ListOrders = ({ menu, title, orders, inputLabel, inputUpdateKey }: ListOrd
 						)
 					}
 					{order.created_at && order.updated_at && (
-						<p>Duração: {durationOrder(order.created_at, order.updated_at)}</p>
+						<p>Duração: {calcDuration(order.created_at, order.updated_at)}</p>
 					)}
 
 					<p>Itens:</p>
