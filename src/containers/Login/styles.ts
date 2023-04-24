@@ -1,3 +1,4 @@
+import Colors from '@/styles/colors';
 import styled from 'styled-components';
 
 export const Main = styled.main`
@@ -7,11 +8,11 @@ export const Main = styled.main`
 	justify-content: center;
 	width: 100%;
 	height: 100vh;
-	color: #333;
-	background-color: #333;
+	color: ${Colors.black[100]};
+	background-color: ${Colors.black[100]};
 
 	h1 {
-		color: #fff;
+		color: ${Colors.white[100]};
 	}
 
 	form {
@@ -22,7 +23,7 @@ export const Main = styled.main`
 		height: 150px;
 		gap: 20px;
 		padding: 20px;
-		background-color: #fff;
+		background-color: ${Colors.white[100]};
 		margin-top: 20px;
 		border-radius: 10px;
 		width: 310px;
@@ -30,8 +31,8 @@ export const Main = styled.main`
 `;
 
 export const ButtonSend = styled.input`
-	color: #fff;
-	background-color: #333;
+	color: ${Colors.white[100]};
+	background-color: ${Colors.black[100]};
 	border: none;
 	padding: 5px 10px;
 `

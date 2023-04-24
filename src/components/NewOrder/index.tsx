@@ -16,7 +16,7 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 
 	const [newOrderItems, setNewOrderItems] = useState<MenuItem[]>([]);
 	const [clientName, setClientName] = useState<string>('');
-	const [menutype, setMenuType] = useState<'day' | 'breakfast'>('breakfast');
+	const [menutype, setMenuType] = useState<'lunch' | 'breakfast'>('breakfast');
 
 	const getTotalItens = () => {
 		return newOrderItems.reduce((acc, item) => {
@@ -44,7 +44,7 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 		setNewOrderItems([...newOrderItems])
 	}
 
-	const handleChangeMenu = (type: 'day' | 'breakfast') => {
+	const handleChangeMenu = (type: 'lunch' | 'breakfast') => {
 		setMenuType(type)
 		setNewOrderItems([])
 		setClientName('')
@@ -93,9 +93,9 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 	}
 
 	return (
-		<S.Container>
-			<S.ContainerMenu>
-				<header>
+		<S.Section>
+			<S.GroupMenu.Container>
+				<S.GroupMenu.Header>
 					<button
 						disabled={menutype === 'breakfast'}
 						onClick={() => handleChangeMenu('breakfast')}
@@ -103,31 +103,32 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 						Café da manhã
 					</button>
 					<button
-						disabled={menutype === 'day'}
-						onClick={() => handleChangeMenu('day')}
+						disabled={menutype === 'lunch'}
+						onClick={() => handleChangeMenu('lunch')}
 					>
-						Dia
+						Almoço
 					</button>
-				</header>
+				</S.GroupMenu.Header>
 
-				<h2>Menu</h2>
-				<ul>
+				<S.GroupMenu.Menu>
 					{
 						menu?.filter(x => x.menu_type === menutype).map((item: any) => (
-							<li key={item.id}>
+							<S.GroupMenu.MenuItem
+								key={item.id}
+								onClick={() => handleAddItem(item)}
+							>
 								<p>{item.item_name} - R$ {item.item_price}</p>
-								<button onClick={() => handleAddItem(item)}>Adicionar</button>
-							</li>
+							</S.GroupMenu.MenuItem>
 						))
 					}
-				</ul>
+				</S.GroupMenu.Menu>
 
-			</S.ContainerMenu>
+			</S.GroupMenu.Container>
 
-			<S.ContainerOrder>
+			<S.GroupResume.Container>
 				<h2>Resumo do Pedido</h2>
 				<label htmlFor="clientName">
-					Client Name:
+					<span>Nome do cliente:</span>
 
 					<input
 						type="text"
@@ -137,20 +138,24 @@ const NewOrder = ({ menu, app }: NewOrderProps) => {
 					/>
 				</label>
 
+				<hr />
+
 				<ul>
 					{newOrderItems.map((item) => (
 						<li key={item.id}>
-							<p>{item.item_name} - R$ {item.item_price} - {item.count}x</p>
-							<button onClick={() => handleRemoverItem(item)}>Remover</button>
+							<span>{item.item_name} - R$ {item.item_price} - {item.count}x</span>
+							<S.Buttton onClick={() => handleRemoverItem(item)}>Remover</S.Buttton>
 						</li>
 					))}
 				</ul>
 				<h3>Total: R${getTotalItens()}</h3>
 
-				<button onClick={postOrder}>Adicionar pedido</button>
-				<button onClick={cleanValues}>Limpar pedido</button>
-			</S.ContainerOrder>
-		</S.Container>
+				<S.ButttonGroup>
+					<S.Buttton onClick={postOrder}>Adicionar pedido</S.Buttton>
+					<S.Buttton onClick={cleanValues}>Limpar pedido</S.Buttton>
+				</S.ButttonGroup>
+			</S.GroupResume.Container>
+		</S.Section>
 	)
 }
 
