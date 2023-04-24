@@ -2,6 +2,9 @@ const Colors = {
 	black: {
 		100: '#333',
 	},
+	grey: {
+		100: '#999',
+	},
 	white: {
 		100: '#fff',
 	},

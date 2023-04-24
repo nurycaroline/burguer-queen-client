@@ -33,7 +33,7 @@ export const GroupMenu = {
 		button {
 			background: none;
 			border: none;
-			color: ${Colors.white[100]};
+			color: ${Colors.grey[100]};
 			
 			&:disabled {
 				color: ${Colors.black[100]};
